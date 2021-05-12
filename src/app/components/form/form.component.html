@@ -1,0 +1,35 @@
+<form class="k-form" [formGroup]="addUserForm" (keydown.enter)="submit()">
+  <fieldset>
+    <legend>Добавить нового пользователя</legend>
+
+    <label class="k-form-field">
+      <span>Имя пользователя</span>
+      <kendo-textbox [clearButton]="true" formControlName="name"></kendo-textbox>
+    </label>
+    <label class="k-form-field">
+      <span>Пол</span>
+      <kendo-dropdownlist [data]="sex" formControlName="sex"></kendo-dropdownlist>
+    </label>
+    <label class="k-form-field">
+      <span>Дата рождения</span>
+      <kendo-datepicker [format]="format" formControlName="dateOfBirth"></kendo-datepicker>
+    </label>
+    <label class="k-form-field">
+      <span>Направление обучения</span>
+      <kendo-dropdownlist [data]="directionOfStudy" formControlName="directionOfStudy"></kendo-dropdownlist>
+    </label>
+    <label class="k-form-field">
+      <span>Дата начала обучения</span>
+      <kendo-datepicker [format]="format" formControlName="startDateOfTraining"></kendo-datepicker>
+    </label>
+    <label class="k-form-field">
+      <span>Дата конца обучения</span>
+      <kendo-datepicker [format]="format" formControlName="endDateOfTraining"></kendo-datepicker>
+    </label>
+  </fieldset>
+  <div class="k-d-flex k-justify-content-between buttons-wrapper">
+    <button kendoButton class="k-button" (click)="closeModal()">Отмена</button>
+    <button kendoButton class="k-button k-primary" (click)="submit()">Добавить</button>
+  </div>
+</form>
+
