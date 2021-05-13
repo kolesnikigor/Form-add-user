@@ -1,30 +1,61 @@
 <form class="k-form" [formGroup]="addUserForm" (keydown.enter)="submit()">
   <fieldset>
     <legend>Добавить нового пользователя</legend>
-
     <label class="k-form-field">
       <span>Имя пользователя</span>
       <kendo-textbox [clearButton]="true" formControlName="name"></kendo-textbox>
+      <span *ngIf="addUserForm.controls.name.touched && addUserForm.controls.name.errors?.required"
+            [style.color]="'red'">Введите имя</span>
+      <span *ngIf="addUserForm.controls.name.touched && addUserForm.controls.name.errors?.uniqueName"
+            [style.color]="'red'">Это имя уже занято</span>
+      <span
+        *ngIf="addUserForm.controls.name.touched && (addUserForm.controls.name.errors?.minlength || addUserForm.controls.name.errors?.maxlength)"
+        [style.color]="'red'">Имя должно быть от 5 до 15 символов</span>
+
     </label>
     <label class="k-form-field">
       <span>Пол</span>
-      <kendo-dropdownlist [data]="sex" formControlName="sex"></kendo-dropdownlist>
+      <kendo-dropdownlist [data]="sex" textField="text" valueField="value" [valuePrimitive]="true"
+                          formControlName="sex"></kendo-dropdownlist>
+      <span *ngIf="addUserForm.controls.sex.touched  && addUserForm.controls.sex.errors?.required"
+            [style.color]="'red'">Выберите пол</span>
     </label>
     <label class="k-form-field">
       <span>Дата рождения</span>
       <kendo-datepicker [format]="format" formControlName="dateOfBirth"></kendo-datepicker>
+      <span *ngIf="addUserForm.controls.dateOfBirth.touched  && addUserForm.controls.dateOfBirth.errors?.required"
+            [style.color]="'red'">Выберите дату</span>
+      <span *ngIf="addUserForm.controls.dateOfBirth.touched  && addUserForm.controls.dateOfBirth.errors?.mustBeLess"
+            [style.color]="'red'">Дата может быть позже даты начала обучения и даты конца обучения</span>
     </label>
     <label class="k-form-field">
       <span>Направление обучения</span>
-      <kendo-dropdownlist [data]="directionOfStudy" formControlName="directionOfStudy"></kendo-dropdownlist>
+      <kendo-dropdownlist [data]="directionOfStudy" textField="text" valueField="value" [valuePrimitive]="true"
+                          formControlName="directionOfStudy"></kendo-dropdownlist>
+      <span
+        *ngIf="addUserForm.controls.directionOfStudy.touched  && addUserForm.controls.directionOfStudy.errors?.required"
+        [style.color]="'red'">Выберите направление обучения</span>
     </label>
     <label class="k-form-field">
       <span>Дата начала обучения</span>
       <kendo-datepicker [format]="format" formControlName="startDateOfTraining"></kendo-datepicker>
+      <span
+        *ngIf="addUserForm.controls.startDateOfTraining.touched  && addUserForm.controls.startDateOfTraining.errors?.required"
+        [style.color]="'red'">Выберите дату</span>
+      <span
+        *ngIf="addUserForm.controls.startDateOfTraining.touched  && (addUserForm.controls.startDateOfTraining.errors?.mustBeLess || addUserForm.controls.startDateOfTraining.errors?.mustBeGreater)"
+        [style.color]="'red'">Дата не может быть раньше даты рождения или позже даты конца обучения</span>
     </label>
     <label class="k-form-field">
       <span>Дата конца обучения</span>
       <kendo-datepicker [format]="format" formControlName="endDateOfTraining"></kendo-datepicker>
+      <span
+        *ngIf="addUserForm.controls.endDateOfTraining.touched  && addUserForm.controls.endDateOfTraining.errors?.required"
+        [style.color]="'red'">Выберите дату</span>
+      <span
+        *ngIf="addUserForm.controls.endDateOfTraining.touched  && addUserForm.controls.endDateOfTraining.errors?.mustBeGreater"
+        [style.color]="'red'">Дата не может быть раньше даты рождения или даты начала обучения</span>
+
     </label>
   </fieldset>
   <div class="k-d-flex k-justify-content-between buttons-wrapper">

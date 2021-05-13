@@ -1,8 +1,10 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { User } from '../../models/user';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+
+import { User, ValueBindingItem } from '../../models/user';
 import { UsersService } from '../../services/users.service';
-import { AbstractControl, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { FormatSettings } from '@progress/kendo-angular-dateinputs';
+import { CustomValidator } from '../../validators/customValidators';
 
 @Component({
   selector: 'app-form',
@@ -11,17 +13,24 @@ import { FormatSettings } from '@progress/kendo-angular-dateinputs';
 })
 export class FormComponent implements OnInit {
 
-  public directionOfStudy: string[];
-  public sex: string[];
+  public directionOfStudy: ValueBindingItem[] = [
+    {text: 'Backend', value: 'backend'},
+    {text: 'Frontend', value: 'frontend'},
+    {text: 'Design', value: 'design'},
+    {text: 'Project Management', value: 'projectManagement'},
+    {text: 'Quality Assurance', value: 'qualityAssurance'},
+    {text: 'Business Analytic', value: 'businessAnalytic'}
+  ];
+  public sex: ValueBindingItem[] = [
+    {text: 'Male', value: 'male'},
+    {text: 'Female', value: 'female'},
+  ];
   public users: User[];
   public addUserForm: FormGroup;
   public format: FormatSettings = {
     displayFormat: 'dd/MM/yyyy',
     inputFormat: 'dd/MM/yy'
   };
-
-  public startDateOfTrainingError: boolean;
-  public endDateOfTrainingError: boolean;
 
   @Output() modalClose = new EventEmitter();
 
@@ -30,85 +39,54 @@ export class FormComponent implements OnInit {
 
   private initAddUserForm(): void {
     this.addUserForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(15), this.UniqueNameValidator]],
-      sex: ['', Validators.required],
-      dateOfBirth: [''],
-      directionOfStudy: ['', Validators.required],
-      startDateOfTraining: [''],
-      endDateOfTraining: ['']
-    }, {validators: this.customValidators});
-
+      name: ['', {
+        validators: [
+          Validators.required,
+          Validators.minLength(5),
+          Validators.maxLength(15),
+          this.uniqueNameValidator
+        ]
+      }],
+      sex: ['', {validators: [Validators.required]}],
+      dateOfBirth: ['', [
+        Validators.required,
+        CustomValidator.mustBeLessThanFieldToCompare('startDateOfTraining'),
+        CustomValidator.mustBeLessThanFieldToCompare('endDateOfTraining')
+      ]],
+      directionOfStudy: ['', [Validators.required]],
+      startDateOfTraining: ['', [
+        Validators.required,
+        CustomValidator.mustBeGreaterThanFieldToCompare('dateOfBirth'),
+        CustomValidator.mustBeLessThanFieldToCompare('endDateOfTraining')
+      ]],
+      endDateOfTraining: ['', []]
+    });
   }
 
-  private customValidators = (formGroup: AbstractControl): void => {
+  private setValidatorsDependency = () => {
+    const FRONTEND_DIRECTION_OF_STUDY = 'frontend';
+    const BACKEND_DIRECTION_OF_STUDY = 'backend';
 
-    const endDateValidator = this.comparison('startDateOfTraining', 'dateOfBirth',
-      (endDate, startDate, birthDate) => {
-        if (!endDate) {
-          return endDate >= startDate && endDate >= birthDate;
-        } else {
-          return true;
-        }
-      }
-    );
-
-    const startDateValidator = this.comparison('endDateOfTraining', 'dateOfBirth',
-      (startDate, endDate, birthDate) => {
-        if (!endDate) {
-          return startDate >= birthDate && startDate <= endDate;
-        } else {
-          return startDate >= birthDate;
-        }
-      }
-    );
-
-    const birthDateValidator = this.comparison('endDateOfTraining', 'dateOfBirth',
-      (startDate, endDate, birthDate) => {
-        if (!endDate) {
-          return startDate >= birthDate && birthDate <= endDate;
-        } else {
-          return startDate >= birthDate;
-        }
-      }
-    );
-
-    const FRONTEND_DIRECTION_OF_STUDY = 'Frontend';
-    const BACKEND_DIRECTION_OF_STUDY = 'Backend';
-
-    formGroup.get('dateOfBirth').setValidators([birthDateValidator, Validators.required]);
-    formGroup.get('startDateOfTraining').setValidators([startDateValidator, Validators.required]);
-
-    if (formGroup.get('directionOfStudy').value === FRONTEND_DIRECTION_OF_STUDY || formGroup.get('directionOfStudy').value === BACKEND_DIRECTION_OF_STUDY) {
-      formGroup.get('endDateOfTraining').clearValidators();
-      formGroup.get('endDateOfTraining').setValidators([endDateValidator]);
-    } else {
-      formGroup.get('endDateOfTraining').setValidators([endDateValidator, Validators.required]);
-    }
-
-    formGroup.get('directionOfStudy').valueChanges.subscribe(() => {
-      if (formGroup.get('directionOfStudy').value === FRONTEND_DIRECTION_OF_STUDY || formGroup.get('directionOfStudy').value === BACKEND_DIRECTION_OF_STUDY) {
-        formGroup.get('endDateOfTraining').clearValidators();
-        formGroup.get('endDateOfTraining').setValidators([endDateValidator]);
+    this.addUserForm.get('directionOfStudy').valueChanges.subscribe(value => {
+      // this.addUserForm.get('endDateOfTraining').clearValidators();
+      if (value === FRONTEND_DIRECTION_OF_STUDY || value === BACKEND_DIRECTION_OF_STUDY) {
+        this.addUserForm.get('endDateOfTraining').setValidators([
+          CustomValidator.mustBeGreaterThanFieldToCompare('startDateOfTraining'),
+          CustomValidator.mustBeGreaterThanFieldToCompare('dateOfBirth')
+        ]);
       } else {
-        formGroup.get('endDateOfTraining').clearValidators();
-        formGroup.get('endDateOfTraining').setValidators([endDateValidator, Validators.required]);
+        this.addUserForm.get('endDateOfTraining').setValidators([
+          Validators.required,
+          CustomValidator.mustBeGreaterThanFieldToCompare('startDateOfTraining'),
+          CustomValidator.mustBeGreaterThanFieldToCompare('dateOfBirth')
+        ]);
       }
     });
   };
 
-  private comparison(firstField: string, secondField: string, predicate: (fieldVal, firstFieldToCompare, secondFieldToCompare) => boolean): ValidatorFn {
-    return (control: AbstractControl): { [key: string]: any } | null => {
-      const group = control.parent;
-      const firstFieldToCompare = group.get(firstField);
-      const secondFieldToCompare = group.get(secondField);
-      const valid = predicate(control.value, firstFieldToCompare.value, secondFieldToCompare.value);
-      return valid ? null : {comparison: {value: control.value}};
-    };
-  }
-
-  private UniqueNameValidator = (formControl: FormControl): null | string =>
+  private uniqueNameValidator = (formControl: FormControl): { [key: string]: any } | null =>
     this.users.map(user => user.name).includes(formControl.value)
-      ? 'Please enter correct name'
+      ? {uniqueName: 'This name is already taken'}
       : null;
 
   private initUsers(): void {
@@ -117,19 +95,10 @@ export class FormComponent implements OnInit {
     });
   }
 
-  private initSex(): void {
-    this.sex = this.usersService.getSex();
-  }
-
-  private initDirectionOfStudy(): void {
-    this.directionOfStudy = this.usersService.getDirectionOfStudy();
-  }
-
   ngOnInit(): void {
-    this.initDirectionOfStudy();
-    this.initSex();
     this.initUsers();
     this.initAddUserForm();
+    this.setValidatorsDependency();
   }
 
   public submit(): void {
@@ -146,4 +115,5 @@ export class FormComponent implements OnInit {
     this.modalClose.emit();
   }
 }
+
 

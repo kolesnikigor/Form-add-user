@@ -6,7 +6,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./base-layout.component.css']
 })
 export class BaseLayoutComponent implements OnInit {
-  public modalOpened = false;
+  public modalOpened = true;
 
   constructor() {
   }
