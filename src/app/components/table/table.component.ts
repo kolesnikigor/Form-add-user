@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+
 import { UsersService } from '../../services/users.service';
 import { User } from '../../models/user';
 
@@ -17,11 +18,10 @@ export class TableComponent implements OnInit {
     this.usersService.getUsers()
       .subscribe(users => {
         this.users = users;
-      }).add(() => {
-    });
+      });
   }
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     this.initUsers();
   }
 }

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { User, ValueBindingItem } from '../../models/user';
 import { UsersService } from '../../services/users.service';
@@ -44,7 +44,7 @@ export class FormComponent implements OnInit {
           Validators.required,
           Validators.minLength(5),
           Validators.maxLength(15),
-          this.uniqueNameValidator
+          CustomValidator.uniqueNameValidator(this.users)
         ]
       }],
       sex: ['', {validators: [Validators.required]}],
@@ -59,35 +59,53 @@ export class FormComponent implements OnInit {
         CustomValidator.mustBeGreaterThanFieldToCompare('dateOfBirth'),
         CustomValidator.mustBeLessThanFieldToCompare('endDateOfTraining')
       ]],
-      endDateOfTraining: ['', []]
+      endDateOfTraining: ['', [
+        Validators.required,
+        CustomValidator.mustBeGreaterThanFieldToCompare('startDateOfTraining'),
+        CustomValidator.mustBeGreaterThanFieldToCompare('dateOfBirth')
+      ]]
     });
   }
 
-  private setValidatorsDependency = () => {
+  private setValidatorsDependency(): void {
     const FRONTEND_DIRECTION_OF_STUDY = 'frontend';
     const BACKEND_DIRECTION_OF_STUDY = 'backend';
+    const defaultValidators = [
+      CustomValidator.mustBeGreaterThanFieldToCompare('startDateOfTraining'),
+      CustomValidator.mustBeGreaterThanFieldToCompare('dateOfBirth')
+    ];
 
     this.addUserForm.get('directionOfStudy').valueChanges.subscribe(value => {
-      // this.addUserForm.get('endDateOfTraining').clearValidators();
+      this.addUserForm.get('endDateOfTraining').clearValidators();
       if (value === FRONTEND_DIRECTION_OF_STUDY || value === BACKEND_DIRECTION_OF_STUDY) {
-        this.addUserForm.get('endDateOfTraining').setValidators([
-          CustomValidator.mustBeGreaterThanFieldToCompare('startDateOfTraining'),
-          CustomValidator.mustBeGreaterThanFieldToCompare('dateOfBirth')
-        ]);
+        if (!this.addUserForm.get('endDateOfTraining').value) {
+          this.addUserForm.get('startDateOfTraining').clearValidators();
+          this.addUserForm.get('startDateOfTraining').setValidators([CustomValidator.mustBeGreaterThanFieldToCompare('dateOfBirth')]);
+          this.addUserForm.get('dateOfBirth').clearValidators();
+          this.addUserForm.get('dateOfBirth').setValidators([CustomValidator.mustBeLessThanFieldToCompare('startDateOfTraining')]);
+        } else {
+          this.addUserForm.get('endDateOfTraining').setValidators([...defaultValidators]);
+        }
       } else {
-        this.addUserForm.get('endDateOfTraining').setValidators([
-          Validators.required,
-          CustomValidator.mustBeGreaterThanFieldToCompare('startDateOfTraining'),
-          CustomValidator.mustBeGreaterThanFieldToCompare('dateOfBirth')
-        ]);
+        this.addUserForm.get('endDateOfTraining').setValidators([Validators.required, ...defaultValidators]);
       }
+      this.addUserForm.get('endDateOfTraining').updateValueAndValidity({emitEvent: false});
     });
-  };
 
-  private uniqueNameValidator = (formControl: FormControl): { [key: string]: any } | null =>
-    this.users.map(user => user.name).includes(formControl.value)
-      ? {uniqueName: 'This name is already taken'}
-      : null;
+    const updateValidity = (fields: string[]): void =>
+      fields.forEach((field) => this.addUserForm.get(field).updateValueAndValidity({emitEvent: false}));
+
+    this.addUserForm.get('dateOfBirth').valueChanges.subscribe(() => {
+      updateValidity(['startDateOfTraining', 'endDateOfTraining']);
+    });
+    this.addUserForm.get('startDateOfTraining').valueChanges.subscribe(() => {
+      updateValidity(['dateOfBirth', 'endDateOfTraining']);
+    });
+    this.addUserForm.get('endDateOfTraining').valueChanges.subscribe(() => {
+      updateValidity(['dateOfBirth', 'startDateOfTraining']);
+      this.addUserForm.get('directionOfStudy').updateValueAndValidity();
+    });
+  }
 
   private initUsers(): void {
     this.usersService.getUsers().subscribe(users => {
@@ -95,7 +113,7 @@ export class FormComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     this.initUsers();
     this.initAddUserForm();
     this.setValidatorsDependency();
@@ -106,7 +124,6 @@ export class FormComponent implements OnInit {
       this.usersService.addUser(this.addUserForm.value);
       this.modalClose.emit();
     } else {
-      this.addUserForm.markAsUntouched();
       this.addUserForm.markAllAsTouched();
     }
   }

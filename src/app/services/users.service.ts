@@ -33,8 +33,8 @@ export class UsersService {
     return of<User[]>(this.users);
   }
 
-  addUser(data: User): void {
-    this.users.push({
+  public addUser(data: User): void {
+    const newUser: User = {
       name: data.name,
       sex: {
         text: typeof data.sex === 'string' && SEX_TYPES[data.sex],
@@ -47,9 +47,7 @@ export class UsersService {
       },
       startDateOfTraining: new DatePipe('en-US').transform(data.startDateOfTraining, 'dd/MM/yyyy'),
       endDateOfTraining: new DatePipe('en-US').transform(data.endDateOfTraining, 'dd/MM/yyyy'),
-    });
-  }
-
-  constructor() {
+    };
+    this.users.push(newUser);
   }
 }

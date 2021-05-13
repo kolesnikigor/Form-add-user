@@ -1,15 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-base-layuot',
   templateUrl: './base-layout.component.html',
   styleUrls: ['./base-layout.component.css']
 })
-export class BaseLayoutComponent implements OnInit {
+export class BaseLayoutComponent {
   public modalOpened = true;
-
-  constructor() {
-  }
 
   public modalClose(): void {
     this.modalOpened = false;
@@ -18,8 +15,4 @@ export class BaseLayoutComponent implements OnInit {
   public modalOpen(): void {
     this.modalOpened = true;
   }
-
-  ngOnInit(): void {
-  }
-
 }

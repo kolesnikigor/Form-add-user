@@ -26,7 +26,7 @@
       <span *ngIf="addUserForm.controls.dateOfBirth.touched  && addUserForm.controls.dateOfBirth.errors?.required"
             [style.color]="'red'">Выберите дату</span>
       <span *ngIf="addUserForm.controls.dateOfBirth.touched  && addUserForm.controls.dateOfBirth.errors?.mustBeLess"
-            [style.color]="'red'">Дата может быть позже даты начала обучения и даты конца обучения</span>
+            [style.color]="'red'">Дата не может быть позже даты начала обучения и даты конца обучения</span>
     </label>
     <label class="k-form-field">
       <span>Направление обучения</span>
@@ -41,7 +41,7 @@
       <kendo-datepicker [format]="format" formControlName="startDateOfTraining"></kendo-datepicker>
       <span
         *ngIf="addUserForm.controls.startDateOfTraining.touched  && addUserForm.controls.startDateOfTraining.errors?.required"
-        [style.color]="'red'">Выберите дату</span>
+        [style.color]="'red'">Выберите дату </span>
       <span
         *ngIf="addUserForm.controls.startDateOfTraining.touched  && (addUserForm.controls.startDateOfTraining.errors?.mustBeLess || addUserForm.controls.startDateOfTraining.errors?.mustBeGreater)"
         [style.color]="'red'">Дата не может быть раньше даты рождения или позже даты конца обучения</span>
@@ -51,7 +51,7 @@
       <kendo-datepicker [format]="format" formControlName="endDateOfTraining"></kendo-datepicker>
       <span
         *ngIf="addUserForm.controls.endDateOfTraining.touched  && addUserForm.controls.endDateOfTraining.errors?.required"
-        [style.color]="'red'">Выберите дату</span>
+        [style.color]="'red'">Выберите дату </span>
       <span
         *ngIf="addUserForm.controls.endDateOfTraining.touched  && addUserForm.controls.endDateOfTraining.errors?.mustBeGreater"
         [style.color]="'red'">Дата не может быть раньше даты рождения или даты начала обучения</span>
