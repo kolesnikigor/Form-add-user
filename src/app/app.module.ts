@@ -14,7 +14,7 @@ import { DropDownsModule } from '@progress/kendo-angular-dropdowns';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { WindowModule } from '@progress/kendo-angular-dialog';
-import { BaseLayoutComponent } from './components/base-layuot/base-layout.component';
+import { BaseLayoutComponent } from './components/base-layout/base-layout.component';
 
 
 @NgModule({

@@ -60,7 +60,8 @@
   </fieldset>
   <div class="k-d-flex k-justify-content-between buttons-wrapper">
     <button kendoButton class="k-button" (click)="closeModal()">Отмена</button>
-    <button kendoButton class="k-button k-primary" (click)="submit()">Добавить</button>
+    <button *ngIf="!isFormForEdit" kendoButton class="k-button k-primary" (click)="submit()">Добавить</button>
+    <button *ngIf="isFormForEdit" kendoButton class="k-button k-primary" (click)="submit()">Обновить</button>
   </div>
 </form>
 

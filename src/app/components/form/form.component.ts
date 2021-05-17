@@ -1,10 +1,13 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
-import { User, ValueBindingItem } from '../../models/user';
+import { User, UserFormValue, ValueBindingItem } from '../../models/user';
 import { UsersService } from '../../services/users.service';
 import { FormatSettings } from '@progress/kendo-angular-dateinputs';
 import { CustomValidator } from '../../validators/customValidators';
+import { ModalService } from '../../services/modal.service';
+import { DIRECTION_OF_STUDY_TYPES, SEX_TYPES } from '../../constants/constants';
+import { UserFormService } from '../../services/user-form.service';
 
 @Component({
   selector: 'app-form',
@@ -13,40 +16,47 @@ import { CustomValidator } from '../../validators/customValidators';
 })
 export class FormComponent implements OnInit {
 
-  public directionOfStudy: ValueBindingItem[] = [
-    {text: 'Backend', value: 'backend'},
-    {text: 'Frontend', value: 'frontend'},
-    {text: 'Design', value: 'design'},
-    {text: 'Project Management', value: 'projectManagement'},
-    {text: 'Quality Assurance', value: 'qualityAssurance'},
-    {text: 'Business Analytic', value: 'businessAnalytic'}
-  ];
-  public sex: ValueBindingItem[] = [
-    {text: 'Male', value: 'male'},
-    {text: 'Female', value: 'female'},
-  ];
+  public directionOfStudy: ValueBindingItem[] = DIRECTION_OF_STUDY_TYPES;
+  public sex: ValueBindingItem[] = SEX_TYPES;
   public users: User[];
   public addUserForm: FormGroup;
   public format: FormatSettings = {
     displayFormat: 'dd/MM/yyyy',
-    inputFormat: 'dd/MM/yy'
+    inputFormat: 'dd/MM/yyyy'
   };
+  private initialFormState: UserFormValue;
+  public isFormForEdit: boolean;
 
-  @Output() modalClose = new EventEmitter();
+  constructor(
+    private usersService: UsersService,
+    private fb: FormBuilder,
+    private modalService: ModalService,
+    private userFormService: UserFormService) {
+  }
 
-  constructor(private usersService: UsersService, private fb: FormBuilder) {
+  public ngOnInit(): void {
+    this.initUsers();
+    this.getFormStatus();
+    this.getInitialFormState();
+    this.initAddUserForm();
+    this.setValidatorsDependency();
+  }
+
+  private getFormStatus(): void {
+    this.userFormService.getFormStatus().subscribe(isFormForEdit => {
+      this.isFormForEdit = isFormForEdit;
+    });
+  }
+
+  private getInitialFormState(): void {
+    this.userFormService.getInitialFormState().subscribe(initState => {
+      this.initialFormState = initState;
+    });
   }
 
   private initAddUserForm(): void {
     this.addUserForm = this.fb.group({
-      name: ['', {
-        validators: [
-          Validators.required,
-          Validators.minLength(5),
-          Validators.maxLength(15),
-          CustomValidator.uniqueNameValidator(this.users)
-        ]
-      }],
+      name: '',
       sex: ['', {validators: [Validators.required]}],
       dateOfBirth: ['', [
         Validators.required,
@@ -70,11 +80,25 @@ export class FormComponent implements OnInit {
   private setValidatorsDependency(): void {
     const FRONTEND_DIRECTION_OF_STUDY = 'frontend';
     const BACKEND_DIRECTION_OF_STUDY = 'backend';
-    const defaultValidators = [
+    const defaultValidatorsForEndDateOfTraining = [
       CustomValidator.mustBeGreaterThanFieldToCompare('startDateOfTraining'),
       CustomValidator.mustBeGreaterThanFieldToCompare('dateOfBirth')
     ];
-
+    const defaultValidatorsForName = [
+      Validators.required,
+      Validators.minLength(5),
+      Validators.maxLength(15)
+    ];
+    const updateValidity = (fields: string[]): void =>
+      fields.forEach((field) => this.addUserForm.get(field).updateValueAndValidity({emitEvent: false}));
+    if (this.isFormForEdit) {
+      this.addUserForm.get('name').setValidators([
+        ...defaultValidatorsForName,
+        CustomValidator.uniqueNameValidator(this.users.filter(user => user.id !== this.initialFormState.id))]);
+      this.addUserForm.patchValue(this.initialFormState);
+    } else {
+      this.addUserForm.get('name').setValidators([...defaultValidatorsForName, CustomValidator.uniqueNameValidator(this.users)]);
+    }
     this.addUserForm.get('directionOfStudy').valueChanges.subscribe(value => {
       this.addUserForm.get('endDateOfTraining').clearValidators();
       if (value === FRONTEND_DIRECTION_OF_STUDY || value === BACKEND_DIRECTION_OF_STUDY) {
@@ -84,16 +108,13 @@ export class FormComponent implements OnInit {
           this.addUserForm.get('dateOfBirth').clearValidators();
           this.addUserForm.get('dateOfBirth').setValidators([CustomValidator.mustBeLessThanFieldToCompare('startDateOfTraining')]);
         } else {
-          this.addUserForm.get('endDateOfTraining').setValidators([...defaultValidators]);
+          this.addUserForm.get('endDateOfTraining').setValidators([...defaultValidatorsForEndDateOfTraining]);
         }
       } else {
-        this.addUserForm.get('endDateOfTraining').setValidators([Validators.required, ...defaultValidators]);
+        this.addUserForm.get('endDateOfTraining').setValidators([Validators.required, ...defaultValidatorsForEndDateOfTraining]);
       }
-      this.addUserForm.get('endDateOfTraining').updateValueAndValidity({emitEvent: false});
+      updateValidity(['endDateOfTraining']);
     });
-
-    const updateValidity = (fields: string[]): void =>
-      fields.forEach((field) => this.addUserForm.get(field).updateValueAndValidity({emitEvent: false}));
 
     this.addUserForm.get('dateOfBirth').valueChanges.subscribe(() => {
       updateValidity(['startDateOfTraining', 'endDateOfTraining']);
@@ -113,23 +134,21 @@ export class FormComponent implements OnInit {
     });
   }
 
-  public ngOnInit(): void {
-    this.initUsers();
-    this.initAddUserForm();
-    this.setValidatorsDependency();
-  }
-
   public submit(): void {
     if (this.addUserForm.valid) {
-      this.usersService.addUser(this.addUserForm.value);
-      this.modalClose.emit();
+      if (this.isFormForEdit) {
+        this.usersService.editUser(this.addUserForm.value, this.initialFormState.id);
+      } else {
+        this.usersService.addUser(this.addUserForm.value);
+      }
+      this.modalService.modalClose();
     } else {
       this.addUserForm.markAllAsTouched();
     }
   }
 
   public closeModal(): void {
-    this.modalClose.emit();
+    this.modalService.modalClose();
   }
 }
 

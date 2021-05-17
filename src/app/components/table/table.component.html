@@ -1,8 +1,23 @@
-<kendo-grid [data]="users" [height]="410">
+<kendo-grid
+  [data]="users"
+  (remove)="removeHandler($event)"
+  (edit)="editHandler($event)"
+  (add)="addHandler()"
+  >
+  <ng-template kendoGridToolbarTemplate>
+    <button kendoGridAddCommand>Добавить пользователя</button>
+  </ng-template>
   <kendo-grid-column field="name" title="Имя пользователя"></kendo-grid-column>
   <kendo-grid-column field="sex.text" title="Пол"></kendo-grid-column>
   <kendo-grid-column field="dateOfBirth" title="Дата рождения"></kendo-grid-column>
   <kendo-grid-column field="directionOfStudy.text" title="Направление обучения"></kendo-grid-column>
   <kendo-grid-column field="startDateOfTraining" title="Дата начала обучения"></kendo-grid-column>
   <kendo-grid-column field="endDateOfTraining" title="Дата конца обучения"></kendo-grid-column>
+  <kendo-grid-command-column title="Действия" width="210">
+    <ng-template kendoGridCellTemplate>
+      <button kendoGridEditCommand>Редактировать</button>
+      <button kendoGridRemoveCommand [primary]="true">Удалить</button>
+    </ng-template>
+  </kendo-grid-command-column>
 </kendo-grid>
+<pre>{{users|json}}</pre>

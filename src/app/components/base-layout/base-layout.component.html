@@ -1,0 +1,9 @@
+<main class="main-content-wrapper">
+  <!--  <button kendoButton (click)="modalOpen()" class="btn">Добавить пользователя</button>-->
+  <div class="k-overlay" *ngIf="isModalOpened"></div>
+  <kendo-window title="Пожалуйста, введите необходимые данные" *ngIf="isModalOpened" (close)="modalClose()"
+                [minWidth]="250">
+    <app-form></app-form>
+  </kendo-window>
+  <app-table></app-table>
+</main>
